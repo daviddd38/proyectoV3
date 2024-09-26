@@ -1,0 +1,63 @@
+from reservacion_computadores.db import get_db_connection
+
+class Computador:
+    def __init__(self, id_computador, nombre, descripcion, estado):
+        self.id_computador = id_computador
+        self.nombre = nombre
+        self.descripcion = descripcion
+        self.estado = estado
+
+    @staticmethod
+    def get_total_count():
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM Computadores")
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count
+
+    @staticmethod
+    def get_all():
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Computadores")
+        computadores = cursor.fetchall()
+        conn.close()
+        return [Computador(c['id_computador'], c['nombre'], c['descripcion'], c['estado']) for c in computadores]
+
+    @staticmethod
+    def get_by_id(id_computador):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Computadores WHERE id_computador = ?", (id_computador,))
+        computador = cursor.fetchone()
+        conn.close()
+        if computador:
+            return Computador(computador['id_computador'], computador['nombre'], computador['descripcion'], computador['estado'])
+        return None
+
+    def save(self):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        if self.id_computador:
+            cursor.execute("""
+                UPDATE Computadores
+                SET nombre = ?, descripcion = ?, estado = ?
+                WHERE id_computador = ?
+            """, (self.nombre, self.descripcion, self.estado, self.id_computador))
+        else:
+            cursor.execute("""
+                INSERT INTO Computadores (nombre, descripcion, estado)
+                VALUES (?, ?, ?)
+            """, (self.nombre, self.descripcion, self.estado))
+            self.id_computador = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def delete(id_computador):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM Computadores WHERE id_computador = ?", (id_computador,))
+        conn.commit()
+        conn.close()

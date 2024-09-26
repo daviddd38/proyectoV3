@@ -1,0 +1,43 @@
+import tkinter as tk
+from tkinter import ttk
+from reservacion_computadores.controllers.admin_controller import AdminController
+
+
+class AdminView(ttk.Frame):
+    def __init__(self, master, admin):
+        super().__init__(master)
+        self.master = master
+        self.admin = admin
+        self.admin_controller = AdminController()
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(expand=True, fill="both")
+
+        self.summary_frame = ttk.Frame(self.notebook)
+        self.computers_frame = ttk.Frame(self.notebook)
+        self.reservations_frame = ttk.Frame(self.notebook)
+        self.users_frame = ttk.Frame(self.notebook)
+
+        self.notebook.add(self.summary_frame, text="Resumen")
+        self.notebook.add(self.computers_frame, text="Computadores")
+        self.notebook.add(self.reservations_frame, text="Reservaciones")
+        self.notebook.add(self.users_frame, text="Usuarios")
+
+        self.create_summary_widgets()
+        self.create_computers_widgets()
+        self.create_reservations_widgets()
+        self.create_users_widgets()
+
+    def create_summary_widgets(self):
+        stats = self.admin_controller.get_general_stats()
+
+        ttk.Label(self.summary_frame, text="Resumen General", font=("Helvetica", 16)).pack(pady=10)
+
+        ttk.Label(self.summary_frame, text=f"Total de Computadores: {stats['total_computers']}").pack(pady=5)
+        ttk.Label(self.summary_frame, text=f"Total de Reservaciones: {stats['total_reservations']}").pack(pady=5)
+        ttk.Label(self.summary_frame, text=f"Total de Usuarios: {stats['total_users']}").pack(pady=5)
+
+    def create_computers_widgets(self):
+        ttk.Label(self.computers_frame, text="Lista de Computadores", font=("Helvetica", 16)).pack(pady=10

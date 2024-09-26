@@ -1,0 +1,78 @@
+from reservacion_computadores.db import get_db_connection
+
+class Usuario:
+    def __init__(self, id_usuario, nombre, apellido, email, contrasena, rol):
+        self.id_usuario = id_usuario
+        self.nombre = nombre
+        self.apellido = apellido
+        self.email = email
+        self.contrasena = contrasena
+        self.rol = rol
+
+    @staticmethod
+    def get_total_count():
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM Usuarios")
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count
+
+    @staticmethod
+    def get_all():
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Usuarios")
+        usuarios = cursor.fetchall()
+        conn.close()
+        return [Usuario(u['id_usuario'], u['nombre'], u['apellido'], u['email'], u['contrasena'], u['rol']) for u in usuarios]
+
+    @staticmethod
+    def get_by_id(id_usuario):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Usuarios WHERE id_usuario = ?", (id_usuario,))
+        usuario = cursor.fetchone()
+        conn.close()
+        if usuario:
+            return Usuario(usuario['id_usuario'], usuario['nombre'], usuario['apellido'],
+                           usuario['email'], usuario['contrasena'], usuario['rol'])
+        return None
+
+    @staticmethod
+    def get_by_email(email):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Usuarios WHERE email = ?", (email,))
+        usuario = cursor.fetchone()
+        conn.close()
+        if usuario:
+            return Usuario(usuario['id_usuario'], usuario['nombre'], usuario['apellido'],
+                           usuario['email'], usuario['contrasena'], usuario['rol'])
+        return None
+
+    def save(self):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        if self.id_usuario:
+            cursor.execute("""
+                UPDATE Usuarios
+                SET nombre = ?, apellido = ?, email = ?, contrasena = ?, rol = ?
+                WHERE id_usuario = ?
+            """, (self.nombre, self.apellido, self.email, self.contrasena, self.rol, self.id_usuario))
+        else:
+            cursor.execute("""
+                INSERT INTO Usuarios (nombre, apellido, email, contrasena, rol)
+                VALUES (?, ?, ?, ?, ?)
+            """, (self.nombre, self.apellido, self.email, self.contrasena, self.rol))
+            self.id_usuario = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def delete(id_usuario):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM Usuarios WHERE id_usuario = ?", (id_usuario,))
+        conn.commit()
+        conn.close()

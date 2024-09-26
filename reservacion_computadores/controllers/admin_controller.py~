@@ -1,0 +1,37 @@
+from reservacion_computadores.models.computador import Computador
+from reservacion_computadores.models.reservacion import Reservacion
+from reservacion_computadores.models.usuario import Usuario
+
+class AdminController:
+    def get_general_stats(self):
+        total_computers = Computador.get_total_count()
+        total_reservations = Reservacion.get_total_count()
+        total_users = Usuario.get_total_count()
+        return {
+            "total_computers": total_computers,
+            "total_reservations": total_reservations,
+            "total_users": total_users
+        }
+
+class AdminController:
+    def get_general_stats(self):
+        total_users = Usuario.get_total_count()
+        total_computers = Computador.get_total_count()
+        total_reservations = Reservacion.get_total_count()
+        active_reservations = Reservacion.get_active_count()
+
+        return {
+            "Total de Usuarios": total_users,
+            "Total de Computadores": total_computers,
+            "Total de Reservaciones": total_reservations,
+            "Reservaciones Activas": active_reservations
+        }
+
+    def get_all_users(self):
+        return Usuario.get_all()
+
+    def get_all_computers(self):
+        return Computador.get_all()
+
+    def get_all_reservations(self):
+        return Reservacion.get_all()

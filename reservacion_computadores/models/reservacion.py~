@@ -1,0 +1,75 @@
+from reservacion_computadores.db import get_db_connection
+from datetime import datetime
+
+class Reservacion:
+    def __init__(self, id_reservacion, id_usuario, id_computador, fecha_inicio, fecha_fin, estado):
+        self.id_reservacion = id_reservacion
+        self.id_usuario = id_usuario
+        self.id_computador = id_computador
+        self.fecha_inicio = fecha_inicio
+        self.fecha_fin = fecha_fin
+        self.estado = estado
+
+    @staticmethod
+    def get_total_count():
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM Reservaciones")
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count
+
+    @staticmethod
+    def get_all():
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Reservaciones")
+        reservaciones = cursor.fetchall()
+        conn.close()
+        return [Reservacion(r['id_reservacion'], r['id_usuario'], r['id_computador'],
+                            datetime.fromisoformat(r['fecha_inicio']),
+                            datetime.fromisoformat(r['fecha_fin']),
+                            r['estado']) for r in reservaciones]
+
+    @staticmethod
+    def get_by_id(id_reservacion):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Reservaciones WHERE id_reservacion = ?", (id_reservacion,))
+        reservacion = cursor.fetchone()
+        conn.close()
+        if reservacion:
+            return Reservacion(reservacion['id_reservacion'], reservacion['id_usuario'],
+                               reservacion['id_computador'],
+                               datetime.fromisoformat(reservacion['fecha_inicio']),
+                               datetime.fromisoformat(reservacion['fecha_fin']),
+                               reservacion['estado'])
+        return None
+
+    def save(self):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        if self.id_reservacion:
+            cursor.execute("""
+                UPDATE Reservaciones
+                SET id_usuario = ?, id_computador = ?, fecha_inicio = ?, fecha_fin = ?, estado = ?
+                WHERE id_reservacion = ?
+            """, (self.id_usuario, self.id_computador, self.fecha_inicio.isoformat(),
+                  self.fecha_fin.isoformat(), self.estado, self.id_reservacion))
+        else:
+            cursor.execute("""
+                INSERT INTO Reservaciones (id_usuario, id_computador, fecha_inicio, fecha_fin, estado)
+                VALUES (?, ?, ?, ?, ?)
+            """, (self.id_usuario, self.id_computador, self.fecha_inicio.isoformat(),
+                  self.fecha_fin.isoformat(), self.estado))
+            self.id_reservacion = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def delete(id_reservacion):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM Reservaciones WHERE id_reservacion = ?", (id_reservacion,))
+        conn.commit()
+        conn.close()

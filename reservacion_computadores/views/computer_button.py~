@@ -1,0 +1,111 @@
+import tkinter as tk
+from tkinter import ttk
+from datetime import datetime, timedelta
+
+
+class ComputerButton(ttk.Frame):
+    def __init__(self, parent, computer, user_controller, on_select):
+        super().__init__(parent)
+        self.computer = computer
+        self.user_controller = user_controller
+        self.on_select = on_select
+        self.tooltip = None
+        self.is_selected = False
+        self.draw()
+
+    def draw(self):
+        status, time_info, user_name = self.get_status_color()
+
+        # Definir colores según el estado
+        colors = {
+            "Disponible": "#4CAF50",  # Verde
+            "Reservado": "#FFC107",  # Amarillo
+            "En mantenimiento": "#F44336",  # Rojo
+            "No disponible": "#9E9E9E"  # Gris
+        }
+
+        button_color = colors.get(status, "#9E9E9E")
+        if self.is_selected:
+            button_color = "#2196F3"  # Azul para indicar selección
+
+        self.button = tk.Button(
+            self,
+            text=f"{self.computer.nombre}\n{status}",
+            command=self.on_click,
+            width=20,
+            height=3,
+            bg=button_color,
+            fg="white",
+            font=("Helvetica", 10, "bold")
+        )
+        self.button.pack(pady=5)
+
+        self.button.bind("<Enter>", self.show_tooltip)
+        self.button.bind("<Leave>", self.hide_tooltip)
+
+        if status == "Disponible" and time_info:
+            ttk.Label(self, text=f"Próxima reserva: {time_info.strftime('%I:%M %p')}").pack()
+        elif status == "Reservado" and time_info:
+            ttk.Label(self, text=f"Disponible a partir de: {time_info.strftime('%I:%M %p')}").pack()
+
+    def get_status_color(self):
+        return self.user_controller.get_computer_status(self.computer.id_computador)
+
+    def on_click(self):
+        status, _, _ = self.get_status_color()
+        if status == "Disponible":
+            self.is_selected = not self.is_selected
+            self.on_select(self.computer, self.is_selected)
+            self.update_status()
+            print(
+                f"Computador {self.computer.nombre} {'seleccionado' if self.is_selected else 'deseleccionado'} para reserva")
+        else:
+            print(f"El computador {self.computer.nombre} no está disponible")
+
+    def update_status(self):
+        self.button.destroy()
+        for widget in self.winfo_children():
+            widget.destroy()
+        self.draw()
+
+    def show_tooltip(self, event):
+        x = y = 0
+        x, y, _, _ = self.button.bbox("insert")
+        x += self.button.winfo_rootx() + 35
+        y += self.button.winfo_rooty() + 35
+
+        # Crear un toplevel window
+        self.tooltip = tk.Toplevel(self.button)
+        # Eliminar la decoración de la ventana
+        self.tooltip.wm_overrideredirect(True)
+        self.tooltip.wm_geometry(f"+{x}+{y}")
+
+        label = tk.Label(self.tooltip, text=self.get_computer_info(), justify='left',
+                         background="#ffffff", relief='solid', borderwidth=1,
+                         font=("Helvetica", "8", "normal"), padx=5, pady=5)
+        label.pack(ipadx=1)
+
+    def hide_tooltip(self, event=None):
+        if self.tooltip:
+            self.tooltip.destroy()
+            self.tooltip = None
+
+    def get_computer_info(self):
+        status, time_info, user_name = self.get_status_color()
+        info = f"ID: {self.computer.id_computador}\n"
+        info += f"Nombre: {self.computer.nombre}\n"
+        info += f"Descripción: {self.computer.descripcion}\n"
+        info += f"Estado: {status}\n"
+        if status == "Disponible" and time_info:
+            info += f"Próxima reserva: {time_info.strftime('%I:%M %p')}\n"
+        elif status == "Reservado":
+            if time_info:
+                info += f"Disponible a partir de: {time_info.strftime('%I:%M %p')}\n"
+            if user_name:
+                info += f"Reservado por: {user_name}"
+        return info
+
+    def set_selected(self, is_selected):
+        if self.is_selected != is_selected:
+            self.is_selected = is_selected
+            self.update_status()
